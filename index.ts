@@ -1,8 +1,10 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
 // get -> preguntar por información
 // post -> enviar nueva información
@@ -27,9 +29,31 @@ app.get('/books', (request, response) => {
 });
 
 app.post('/books', (request, response) => {
+  const title = request.body.title;
+
+  if(!title) {
+    response.json({
+      status: 'error',
+      message: BookError.EMPTY_TITLE,
+    });
+    return;
+  }
+
   const newBook = {
-    title: request.body.title,
+    title,
   };
+
+  const bookAlreadyExists = books.find((book) => {
+    return book.title === newBook.title;
+  });
+  if(bookAlreadyExists) {
+    response.json({
+      status: 'error',
+      message: BookError.ALREADY_EXISTS,
+    });
+    return;
+  }
+
   books.push(newBook);
 
   response.json({
@@ -38,6 +62,10 @@ app.post('/books', (request, response) => {
   });
 });
 
+enum BookError {
+  EMPTY_TITLE = 'EMPTY_TITLE',
+  ALREADY_EXISTS = 'ALREADY_EXISTS',
+}
 
 app.listen(3333, () => {
   console.log('app listening');
